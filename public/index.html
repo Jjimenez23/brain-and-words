@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Brain & Words</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0a0a0f;--surface:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);
+  --text:#f0ede8;--muted:rgba(240,237,232,0.45);--green:#1D9E75;--green-light:#5DCAA5;
+  --green-bg:rgba(29,158,117,0.12);--red:rgba(226,75,74,0.15);--red-text:#F09595;
+  --gold:#F5A623;--purple-text:#C4A8FF;--social:#7C6FCD;--social-bg:rgba(124,111,205,0.12);
+  --social-border:rgba(124,111,205,0.3);
+}
+body{background:var(--bg);color:var(--text);font-family:Georgia,serif;min-height:100vh;padding-bottom:4rem;}
+.glow{position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:700px;height:700px;
+  background:radial-gradient(circle,rgba(29,158,117,0.09) 0%,transparent 70%);pointer-events:none;z-index:0;}
+.wrap{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:1.5rem 1rem;}
+.logo{font-size:22px;font-weight:700;letter-spacing:-0.5px;margin-bottom:2px;}
+.logo-sub{font-size:11px;color:var(--green);letter-spacing:.15em;text-transform:uppercase;font-family:monospace;margin-bottom:1.5rem;}
+.nav{display:flex;gap:7px;margin-bottom:1.5rem;flex-wrap:wrap;}
+.nav-btn{font-size:11px;padding:5px 13px;border-radius:20px;border:.5px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;font-family:monospace;letter-spacing:.06em;transition:all .15s;}
+.nav-btn.active{border-color:var(--green);background:var(--green-bg);color:var(--green-light);}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.25rem;}
+.stat-card{background:var(--surface);border:.5px solid var(--border);border-radius:12px;padding:12px 14px;}
+.stat-num{font-size:20px;font-weight:700;line-height:1;}
+.stat-label{font-size:10px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.08em;font-family:monospace;}
+.xp-bar{background:rgba(255,255,255,0.06);border-radius:4px;height:5px;margin-top:7px;overflow:hidden;}
+.xp-fill{height:100%;background:var(--green);border-radius:4px;transition:width .6s ease;}
+.xp-hint{font-size:10px;color:rgba(240,237,232,0.25);margin-top:3px;font-family:monospace;}
+.card{background:var(--surface);border:.5px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1rem;}
+.section-label{font-size:10px;color:var(--green);letter-spacing:.12em;text-transform:uppercase;font-family:monospace;margin-bottom:10px;}
+.tag-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;}
+.tag{font-size:12px;padding:5px 13px;border-radius:20px;border:.5px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;font-family:monospace;transition:all .15s;}
+.tag.sel{border-color:var(--green);background:var(--green-bg);color:var(--green-light);}
+.tag.social-sel{border-color:var(--social);background:var(--social-bg);color:#B8B0FF;}
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;
+  padding:10px 22px;border-radius:8px;border:none;background:var(--green);color:#fff;
+  cursor:pointer;font-family:Georgia,serif;transition:all .15s;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn:hover:not(:disabled){background:#0F6E56;}
+.btn-social{background:var(--social);} .btn-social:hover:not(:disabled){background:#5a4fb5;}
+.btn-ghost{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:9px 18px;
+  border-radius:8px;border:.5px solid var(--border);background:transparent;color:var(--muted);
+  cursor:pointer;font-family:Georgia,serif;transition:all .15s;}
+.btn-ghost:hover{border-color:rgba(255,255,255,0.2);color:var(--text);}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+.concept-text{font-size:15px;line-height:1.85;color:var(--text);font-style:italic;}
+textarea{width:100%;min-height:100px;background:rgba(255,255,255,0.05);border:.5px solid rgba(255,255,255,0.1);
+  border-radius:10px;padding:12px;color:var(--text);font-size:14px;font-family:Georgia,serif;
+  line-height:1.7;resize:vertical;outline:none;}
+textarea:focus{border-color:var(--green);}
+.feedback{background:rgba(29,158,117,0.08);border-left:3px solid var(--green);
+  border-radius:0 10px 10px 0;padding:14px 16px;margin-top:12px;font-size:14px;
+  line-height:1.85;color:rgba(240,237,232,0.85);white-space:pre-wrap;}
+.social-feedback{background:rgba(124,111,205,0.08);border-left:3px solid var(--social);
+  border-radius:0 10px 10px 0;padding:14px 16px;margin-top:12px;font-size:14px;
+  line-height:1.85;color:rgba(240,237,232,0.85);white-space:pre-wrap;}
+.warning-box{background:rgba(245,166,35,0.08);border-left:3px solid var(--gold);
+  border-radius:0 10px 10px 0;padding:12px 14px;margin-top:10px;font-size:13px;color:var(--gold);}
+.error-box{background:var(--red);border-left:3px solid #E24B4A;border-radius:0 10px 10px 0;
+  padding:12px 14px;margin-top:10px;font-size:13px;color:var(--red-text);}
+.phase-bar{display:flex;gap:6px;margin-bottom:1.5rem;}
+.phase-dot{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,0.08);transition:background .3s;}
+.phase-dot.active{background:var(--green-light);}
+.phase-dot.done{background:var(--green);}
+.score-ring{text-align:center;padding:1.5rem 1rem;}
+.score-num{font-size:52px;font-weight:700;color:var(--green);line-height:1;}
+.score-label{font-size:11px;color:var(--muted);font-family:monospace;text-transform:uppercase;letter-spacing:.1em;margin-top:4px;}
+.xp-gained{font-size:13px;color:var(--green-light);font-family:monospace;margin-top:6px;}
+.badge-grid{display:flex;flex-direction:column;gap:10px;}
+.badge-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;
+  border:.5px solid var(--border);background:rgba(255,255,255,0.02);}
+.badge-item.earned{border-color:rgba(29,158,117,0.35);background:rgba(29,158,117,0.07);}
+.badge-icon{font-size:24px;min-width:32px;text-align:center;}
+.badge-name{font-size:13px;font-weight:600;}
+.badge-desc{font-size:11px;color:var(--muted);font-family:monospace;margin-top:2px;}
+.popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;
+  align-items:center;justify-content:center;z-index:100;padding:1rem;}
+.popup-card{background:#0f1117;border:1px solid rgba(29,158,117,0.4);border-radius:20px;
+  padding:2rem;text-align:center;max-width:320px;width:100%;}
+.q-item{padding:10px 0;border-bottom:.5px solid var(--border);font-size:14px;line-height:1.7;}
+.q-item:last-child{border-bottom:none;}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stats-cell{background:rgba(255,255,255,0.03);border-radius:10px;padding:14px;}
+.stats-val{font-size:20px;font-weight:700;}
+.stats-key{font-size:10px;color:var(--muted);font-family:monospace;text-transform:uppercase;letter-spacing:.08em;margin-top:4px;}
+.word-lock-box{background:rgba(147,112,219,0.08);border:.5px solid rgba(147,112,219,0.3);
+  border-radius:12px;padding:14px 16px;margin-bottom:1rem;}
+.word-lock-title{font-size:10px;color:var(--purple-text);letter-spacing:.12em;text-transform:uppercase;font-family:monospace;margin-bottom:10px;}
+.word-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.word-chip{font-size:13px;padding:5px 13px;border-radius:20px;background:rgba(147,112,219,0.12);
+  border:.5px solid rgba(147,112,219,0.3);color:var(--purple-text);font-family:monospace;}
+.word-chip.used{background:rgba(29,158,117,0.15);border-color:var(--green);color:var(--green-light);}
+.social-mode-banner{background:var(--social-bg);border:.5px solid var(--social-border);
+  border-radius:12px;padding:14px 16px;margin-bottom:1rem;display:flex;align-items:center;gap:12px;}
+.social-scene{font-size:15px;line-height:1.8;color:var(--text);}
+.scenario-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:5px 13px;
+  border-radius:20px;border:.5px solid var(--social-border);background:var(--social-bg);
+  color:#B8B0FF;font-family:monospace;margin:3px;}
+.cheat-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:.5px solid var(--border);}
+.cheat-row:last-child{border-bottom:none;}
+.cheat-phrase{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px;}
+.cheat-use{font-size:12px;color:var(--muted);font-style:italic;}
+.pattern-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:.5px solid var(--border);}
+.pattern-item:last-child{border-bottom:none;}
+.pattern-count{font-size:11px;font-family:monospace;color:var(--red-text);background:rgba(226,75,74,0.1);
+  padding:2px 8px;border-radius:10px;white-space:nowrap;margin-top:2px;}
+.pattern-text{font-size:13px;color:var(--muted);line-height:1.6;}
+.quiz-input{width:100%;background:rgba(255,255,255,0.05);border:.5px solid rgba(255,255,255,0.1);
+  border-radius:10px;padding:10px 12px;color:var(--text);font-size:14px;font-family:Georgia,serif;outline:none;}
+.quiz-input:focus{border-color:var(--green);}
+.quiz-result{font-size:14px;padding:10px 14px;border-radius:10px;margin-top:10px;line-height:1.6;}
+.quiz-result.correct{background:rgba(29,158,117,0.12);color:var(--green-light);}
+.quiz-result.wrong{background:rgba(226,75,74,0.1);color:var(--red-text);}
+.mode-toggle{display:flex;gap:8px;margin-bottom:1rem;}
+.mode-btn{flex:1;padding:10px;border-radius:10px;border:.5px solid var(--border);background:transparent;
+  color:var(--muted);cursor:pointer;font-family:monospace;font-size:12px;text-align:center;transition:all .15s;}
+.mode-btn.active-academic{border-color:var(--green);background:var(--green-bg);color:var(--green-light);}
+.mode-btn.active-social{border-color:var(--social);background:var(--social-bg);color:#B8B0FF;}
+.toggle-track{width:36px;height:20px;border-radius:10px;background:rgba(255,255,255,0.08);
+  position:relative;transition:background .2s;flex-shrink:0;cursor:pointer;}
+.toggle-track.on{background:var(--green);}
+.toggle-thumb{width:14px;height:14px;border-radius:50%;background:#fff;position:absolute;
+  top:3px;left:3px;transition:left .2s;}
+.toggle-track.on .toggle-thumb{left:19px;}
+@media(max-width:480px){
+  .stat-num{font-size:17px;} .score-num{font-size:40px;}
+  .btn{font-size:13px;padding:9px 16px;} .nav-btn{font-size:10px;padding:4px 10px;}
+}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="wrap">
+  <div class="logo">Brain &amp; Words</div>
+  <div class="logo-sub">English Fluency Trainer</div>
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="showTab('train')" id="tab-train">TRAIN</button>
+    <button class="nav-btn" onclick="showTab('social')" id="tab-social">SOCIAL</button>
+    <button class="nav-btn" onclick="showTab('phrases')" id="tab-phrases">PHRASES</button>
+    <button class="nav-btn" onclick="showTab('quiz')" id="tab-quiz">QUIZ</button>
+    <button class="nav-btn" onclick="showTab('stats')" id="tab-stats">STATS</button>
+    <button class="nav-btn" onclick="showTab('badges')" id="tab-badges">BADGES</button>
+  </div>
+
+  <!-- TRAIN TAB -->
+  <div id="tab-train-content">
+    <div id="home-screen">
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-num" id="h-level">Lv.1</div>
+          <div class="stat-label" id="h-level-name">Beginner</div>
+          <div class="xp-bar"><div class="xp-fill" id="h-xp-fill" style="width:0%"></div></div>
+          <div class="xp-hint" id="h-xp-hint">0/200 XP</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="h-streak">0</div>
+          <div class="stat-label">Streak 🔥</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="h-sessions">0</div>
+          <div class="stat-label">Sessions</div>
+        </div>
+      </div>
+
+      <div class="card" id="pattern-card" style="display:none">
+        <div class="section-label">Watch for this today</div>
+        <div id="pattern-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Pick your topic</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:pointer;" onclick="togglePersonal()">
+          <div class="toggle-track" id="personal-toggle-track"><div class="toggle-thumb"></div></div>
+          <span style="font-size:13px;color:var(--muted)">Use something from my life today</span>
+        </div>
+        <div id="personal-input-box" style="display:none;margin-bottom:12px">
+          <input type="text" id="personal-topic-input" placeholder="e.g. I felt awkward at a gathering last night..."
+            style="width:100%;background:rgba(255,255,255,0.05);border:.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px 12px;color:var(--text);font-size:14px;font-family:Georgia,serif;outline:none;"/>
+        </div>
+        <div id="topic-tags-box">
+          <div class="tag-row" id="topic-tags">
+            <button class="tag sel" data-val="health and medical science">Health</button>
+            <button class="tag" data-val="personal finance or economics">Finance</button>
+            <button class="tag" data-val="psychology or human behavior">Psychology</button>
+            <button class="tag" data-val="history or sociology">History</button>
+            <button class="tag" data-val="any interesting academic field">Surprise</button>
+          </div>
+        </div>
+        <div class="section-label" style="margin-top:14px">Difficulty</div>
+        <div class="tag-row" id="level-tags">
+          <button class="tag sel" data-val="B2">B2</button>
+          <button class="tag" data-val="C1">C1</button>
+        </div>
+      </div>
+      <div id="home-error"></div>
+      <button class="btn" id="start-btn" onclick="startSession()">Start session ↗</button>
+    </div>
+
+    <!-- SESSION -->
+    <div id="session-screen" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+        <div style="font-size:12px;color:var(--muted);font-family:monospace;" id="session-topic-label"></div>
+        <button class="btn-ghost" onclick="exitSession()">Exit</button>
+      </div>
+      <div class="phase-bar">
+        <div class="phase-dot active" id="dot-1"></div>
+        <div class="phase-dot" id="dot-2"></div>
+        <div class="phase-dot" id="dot-3"></div>
+      </div>
+      <div class="word-lock-box" id="word-lock-box">
+        <div class="word-lock-title">🔒 Word Lock — use all 3 in your explanation</div>
+        <div class="word-chips" id="word-chips"></div>
+      </div>
+      <div id="phase-1">
+        <div class="card">
+          <div class="section-label">Today's concept</div>
+          <div class="concept-text" id="concept-text"></div>
+        </div>
+        <div class="card">
+          <div class="section-label">Phase 1 — Teach it back</div>
+          <p style="font-size:14px;color:var(--muted);margin-bottom:12px;line-height:1.6;">Explain the concept in your own words. Use all 3 locked words. Talk like you are telling a friend.</p>
+          <textarea id="draft-1" placeholder="Type your explanation here..."></textarea>
+          <div id="error-1"></div>
+          <div id="word-lock-feedback"></div>
+          <div id="feedback-1"></div>
+          <div class="btn-row">
+            <button class="btn" id="btn-p1" onclick="submitDraft1()">Submit explanation ↗</button>
+          </div>
+        </div>
+      </div>
+      <div id="phase-2" style="display:none">
+        <div class="card">
+          <div class="section-label">Phase 2 — Critical thinking drill</div>
+          <p style="font-size:14px;color:var(--muted);margin-bottom:12px;line-height:1.6;">Answer all 3 questions. Label them Q1, Q2, Q3.</p>
+          <div id="questions-list"></div>
+          <textarea id="draft-2" placeholder="Q1: ...&#10;Q2: ...&#10;Q3: ..." style="margin-top:12px;min-height:120px"></textarea>
+          <div id="error-2"></div>
+          <div id="feedback-2"></div>
+          <div class="btn-row">
+            <button class="btn" id="btn-p2" onclick="submitDrill()">Submit answers ↗</button>
+          </div>
+        </div>
+      </div>
+      <div id="phase-3" style="display:none">
+        <div class="card">
+          <div class="score-ring">
+            <div class="score-num" id="final-score">0</div>
+            <div class="score-label">Session Score</div>
+            <div class="xp-gained" id="final-xp"></div>
+          </div>
+        </div>
+        <div class="card" id="pattern-warning-card" style="display:none">
+          <div class="section-label">Pattern detected this session</div>
+          <div id="pattern-warning-text" style="font-size:14px;color:var(--muted);line-height:1.7;"></div>
+        </div>
+        <div class="card">
+          <div class="section-label">Phase 3 — Phrase upgrades</div>
+          <p style="font-size:14px;color:var(--muted);margin-bottom:12px;line-height:1.6;">Add these to your phrase bank.</p>
+          <div id="phrases-output"></div>
+          <div id="error-3"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="resetSession()">New session ↗</button>
+          <button class="btn-ghost" onclick="showTab('stats')">View stats</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOCIAL TAB -->
+  <div id="tab-social-content" style="display:none">
+    <div id="social-home">
+      <div class="card" style="border-color:var(--social-border)">
+        <div class="section-label" style="color:#B8B0FF;">Social English Mode</div>
+        <p style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:16px;">
+          Practice real conversations — strangers, professionals, teenagers, networking. No preparation allowed. You respond in the moment.
+        </p>
+        <div class="section-label">Pick your scenario</div>
+        <div class="tag-row" id="social-tags">
+          <button class="tag" data-val="professionals">Working professionals</button>
+          <button class="tag" data-val="teenagers">Teenagers</button>
+          <button class="tag" data-val="networking">Networking event</button>
+          <button class="tag" data-val="small_talk">General small talk</button>
+          <button class="tag" data-val="colleague">New colleague at work</button>
+          <button class="tag" data-val="party">Social gathering</button>
+        </div>
+        <div class="section-label" style="margin-top:14px">Difficulty</div>
+        <div class="tag-row" id="social-level-tags">
+          <button class="tag social-sel" data-val="easy">Easy — warm crowd</button>
+          <button class="tag" data-val="hard">Hard — cold strangers</button>
+        </div>
+      </div>
+      <div id="social-error"></div>
+      <button class="btn btn-social" id="social-start-btn" onclick="startSocialSession()">Start scenario ↗</button>
+
+      <!-- Cheat Sheet -->
+      <div class="card" style="margin-top:1.5rem">
+        <div class="section-label" style="color:#B8B0FF;">Your conversation cheat sheet</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6;">Memorize these. They work in any situation.</p>
+        <div id="cheat-sheet-list"></div>
+      </div>
+    </div>
+
+    <div id="social-session" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+        <div style="font-size:12px;color:#B8B0FF;font-family:monospace;" id="social-scenario-label"></div>
+        <button class="btn-ghost" onclick="exitSocialSession()">Exit</button>
+      </div>
+      <div class="social-mode-banner">
+        <div style="font-size:24px">💬</div>
+        <div>
+          <div style="font-size:11px;color:#B8B0FF;font-family:monospace;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Scene</div>
+          <div class="social-scene" id="social-scene-text"></div>
+        </div>
+      </div>
+      <div class="card" style="border-color:var(--social-border)">
+        <div class="section-label" style="color:#B8B0FF;">Your turn — what do you say?</div>
+        <p style="font-size:14px;color:var(--muted);margin-bottom:12px;line-height:1.6;" id="social-prompt-text"></p>
+        <textarea id="social-draft" placeholder="Type what you would actually say in this moment..."></textarea>
+        <div id="social-error-session"></div>
+        <div id="social-feedback"></div>
+        <div class="btn-row" id="social-btn-row">
+          <button class="btn btn-social" id="social-submit-btn" onclick="submitSocialResponse()">Submit response ↗</button>
+        </div>
+        <div id="social-next-row" style="display:none" class="btn-row">
+          <button class="btn btn-social" onclick="nextSocialRound()">Next round ↗</button>
+          <button class="btn-ghost" onclick="exitSocialSession()">Finish</button>
+        </div>
+      </div>
+      <div id="social-score-card" style="display:none" class="card">
+        <div class="score-ring">
+          <div class="score-num" style="color:var(--social);" id="social-final-score">0</div>
+          <div class="score-label">Social Score</div>
+          <div class="xp-gained" id="social-final-xp"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHRASES TAB -->
+  <div id="tab-phrases-content" style="display:none">
+    <div class="card">
+      <div class="section-label">Your phrase bank</div>
+      <div id="phrase-bank-list"></div>
+    </div>
+  </div>
+
+  <!-- QUIZ TAB -->
+  <div id="tab-quiz-content" style="display:none">
+    <div class="card">
+      <div class="section-label">Phrase recall quiz</div>
+      <div id="quiz-body"></div>
+    </div>
+  </div>
+
+  <!-- STATS TAB -->
+  <div id="tab-stats-content" style="display:none">
+    <div class="card">
+      <div class="section-label">Your progress</div>
+      <div class="stats-grid" id="stats-grid"></div>
+    </div>
+    <div class="card">
+      <div class="section-label">Recurring error patterns</div>
+      <div id="stats-pattern-list"></div>
+    </div>
+  </div>
+
+  <!-- BADGES TAB -->
+  <div id="tab-badges-content" style="display:none">
+    <div class="card">
+      <div class="section-label">Badges</div>
+      <div class="badge-grid" id="badge-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Popups -->
+<div class="popup-overlay" id="badge-popup" style="display:none" onclick="this.style.display='none'">
+  <div class="popup-card">
+    <div style="font-size:44px;margin-bottom:10px">🎉</div>
+    <div style="font-size:17px;font-weight:700;margin-bottom:10px">Badge Unlocked!</div>
+    <div id="popup-badges"></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:14px;font-family:monospace">Tap anywhere to close</div>
+  </div>
+</div>
+
+<div class="popup-overlay" id="word-lock-popup" style="display:none">
+  <div class="popup-card">
+    <div style="font-size:44px;margin-bottom:10px">🔒</div>
+    <div style="font-size:17px;font-weight:700;margin-bottom:10px">Word Lock incomplete</div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.7;" id="missed-words-msg"></div>
+    <div style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn-ghost" onclick="document.getElementById('word-lock-popup').style.display='none'">Revise</button>
+      <button class="btn" onclick="bypassWordLock()">Submit anyway</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const XP_PER_LEVEL=200;
+const LEVEL_NAMES=["","Beginner","Learner","Explorer","Thinker","Speaker","Analyst","Debater","Articulate","Advanced","Fluent","Master"];
+const BADGES_DEF=[
+  {id:"first_session",icon:"🧠",label:"First Step",desc:"Completed your first session"},
+  {id:"first_social",icon:"💬",label:"Ice Breaker",desc:"Completed your first Social session"},
+  {id:"streak_3",icon:"🔥",label:"On Fire",desc:"3 day streak"},
+  {id:"streak_7",icon:"⚡",label:"Unstoppable",desc:"7 day streak"},
+  {id:"word_lock_3",icon:"🔒",label:"Word Keeper",desc:"Used all Word Lock words 3 times"},
+  {id:"social_5",icon:"🤝",label:"Conversationalist",desc:"5 Social sessions completed"},
+  {id:"level_5",icon:"🌿",label:"Growing",desc:"Reached level 5"},
+  {id:"level_10",icon:"🏆",label:"Fluent Force",desc:"Reached level 10"},
+  {id:"perfect_session",icon:"💎",label:"Perfect Round",desc:"Scored 100 in a session"},
+  {id:"sessions_10",icon:"📚",label:"Bookworm",desc:"10 sessions completed"},
+  {id:"phrase_20",icon:"🗣️",label:"Phrase Collector",desc:"Collected 20 phrases"},
+];
+
+const CHEAT_SHEET=[
+  {phrase:"What got you into that?",use:"When someone mentions their job or hobby"},
+  {phrase:"How long have you been doing that?",use:"Natural follow-up to anything they share"},
+  {phrase:"What's your take on that?",use:"When a topic comes up in conversation"},
+  {phrase:"How do you know everyone here?",use:"At any gathering — works every time"},
+  {phrase:"What keeps you busy outside of work?",use:"To break an awkward silence"},
+  {phrase:"That's interesting, what made you choose that path?",use:"After they mention their career"},
+  {phrase:"Have you been to one of these before?",use:"At any event or gathering"},
+  {phrase:"I'd love to hear more about that.",use:"When you want them to keep talking"},
+];
+
+const DEFAULT_PHRASES=[
+  {phrase:"put off",example:"I keep putting off the things that matter most."},
+  {phrase:"catch myself",example:"I catch myself overthinking before I even start."},
+  {phrase:"in the back of my mind",example:"It has been in the back of my mind for weeks."},
+  {phrase:"have agency over",example:"Diet is one area where we have full agency over our choices."},
+  {phrase:"place strain on",example:"Poor sleep can place real strain on your mental health."},
+  {phrase:"weighs on me",example:"This decision has been weighing on me all week."},
+  {phrase:"check in with yourself",example:"It is important to check in with yourself every day."},
+  {phrase:"larger than life",example:"She has a larger than life personality."},
+];
+
+const SOCIAL_SCENARIOS={
+  professionals:{label:"Working professionals",scenes:[
+    "You are at a work event and you see two people you do not know standing near the food table. They look friendly. You walk over.",
+    "You are introduced to someone who works in a completely different field from you. They smile and wait for you to speak.",
+    "You are sitting next to a professional at a seminar. There is a 10 minute break and they look at you.",
+  ]},
+  teenagers:{label:"Teenagers",scenes:[
+    "Your friend's teenage kids are at a family gathering. They are sitting together on their phones. You want to connect.",
+    "A teenager asks you what you do for work. You answer, and now they look at you waiting for you to keep the conversation going.",
+    "You are at a birthday party and the group is mostly teenagers. Everyone is talking and you want to join in.",
+  ]},
+  networking:{label:"Networking event",scenes:[
+    "You just arrived at a professional networking event. You see someone standing alone holding a drink. You walk up to them.",
+    "Someone hands you their business card and says 'So what do you do?' You answer, and now it's your turn to ask something.",
+    "You are in a small group conversation at a networking event. There is a pause and everyone looks around. You decide to speak.",
+  ]},
+  small_talk:{label:"General small talk",scenes:[
+    "You are in an elevator with a neighbor you have never really talked to. It's a long ride up.",
+    "You are waiting in a long line at a coffee shop next to someone who smiles at you.",
+    "You bump into an acquaintance you have not seen in a year. You say hi and then there is silence.",
+  ]},
+  colleague:{label:"New colleague",scenes:[
+    "A new person just started at your workplace. You are both in the kitchen making coffee.",
+    "Your new colleague sits near you. It is lunchtime and you are both eating alone at your desks.",
+    "You are introduced to a new colleague in a team meeting. After the meeting they walk out the same way as you.",
+  ]},
+  party:{label:"Social gathering",scenes:[
+    "You are at a gathering and you only know the host. Everyone else seems to already know each other.",
+    "Someone at a party asks where you are from. You answer, and now they wait for you to continue.",
+    "You are introduced to two people at a gathering. They both look at you expecting you to say something.",
+  ]},
+};
+
+let selectedTopic="health and medical science",selectedLevel="B2",selectedTopicLabel="Health";
+let personalMode=false,concept="",drillQuestions=[],sessionScore=0,xpGained=0;
+let wordLockWords=[],wordLockBypassed=false,pendingSubmit=null;
+let selectedSocial="professionals",selectedSocialLevel="easy";
+let socialRound=0,socialSceneData=null,socialSessionScore=0,socialSessions=0;
+let quizCurrentWord=null,quizAnswered=false;
+
+function loadP(){
+  try{const r=localStorage.getItem("bw_v4");if(r)return JSON.parse(r);}catch(e){}
+  return{xp:0,level:1,streak:0,lastDate:null,sessions:0,badges:[],highScore:0,
+    phraseBank:[...DEFAULT_PHRASES],wordLockWins:0,patterns:[],socialSessions:0,adaptiveLevel:"B2"};
+}
+function saveP(p){try{localStorage.setItem("bw_v4",JSON.stringify(p));}catch(e){}}
+let progress=loadP();
+
+function getLevelName(l){return LEVEL_NAMES[Math.min(l,LEVEL_NAMES.length-1)]||"Master";}
+function getTodayStr(){return new Date().toISOString().slice(0,10);}
+
+async function callAPI(messages,systemMsg){
+  const res=await fetch("/api/claude",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      system:systemMsg||"You are an English fluency coach for a Filipino-Canadian woman at B2 level working toward C1. She sometimes translates directly from Filipino into English. Be warm, direct, concise. Never use em dashes.",
+      messages
+    })
+  });
+  if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.error||"API error "+res.status);}
+  const data=await res.json();
+  return data.content.map(b=>b.text||"").join("").trim();
+}
+
+function updateHomeStats(){
+  const xpInLevel=progress.xp%XP_PER_LEVEL;
+  const pct=Math.round((xpInLevel/XP_PER_LEVEL)*100);
+  document.getElementById("h-level").textContent="Lv."+progress.level;
+  document.getElementById("h-level-name").textContent=getLevelName(progress.level);
+  document.getElementById("h-xp-fill").style.width=pct+"%";
+  document.getElementById("h-xp-hint").textContent=xpInLevel+"/"+XP_PER_LEVEL+" XP";
+  document.getElementById("h-streak").textContent=progress.streak;
+  document.getElementById("h-sessions").textContent=progress.sessions;
+  if(progress.patterns&&progress.patterns.length>0){
+    document.getElementById("pattern-card").style.display="block";
+    document.getElementById("pattern-list").innerHTML=progress.patterns.slice(0,1).map(p=>
+      `<div class="pattern-item"><div class="pattern-count">${p.count}x</div><div class="pattern-text">${p.text}</div></div>`
+    ).join("");
+  }
+}
+
+function showTab(name){
+  ["train","social","phrases","quiz","stats","badges"].forEach(t=>{
+    document.getElementById("tab-"+t+"-content").style.display=t===name?"block":"none";
+    document.getElementById("tab-"+t).classList.toggle("active",t===name);
+  });
+  if(name==="stats")renderStats();
+  if(name==="badges")renderBadges();
+  if(name==="phrases")renderPhrases();
+  if(name==="quiz")renderQuiz();
+  if(name==="social")renderCheatSheet();
+}
+
+function renderCheatSheet(){
+  document.getElementById("cheat-sheet-list").innerHTML=CHEAT_SHEET.map(c=>`
+    <div class="cheat-row">
+      <div style="font-size:18px;min-width:28px">💬</div>
+      <div>
+        <div class="cheat-phrase">"${c.phrase}"</div>
+        <div class="cheat-use">${c.use}</div>
+      </div>
+    </div>`).join("");
+}
+
+// SOCIAL SESSION
+document.querySelectorAll("#social-tags .tag").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll("#social-tags .tag").forEach(x=>x.classList.remove("sel","social-sel"));
+    t.classList.add("social-sel");selectedSocial=t.dataset.val;
+  };
+});
+document.querySelectorAll("#social-level-tags .tag").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll("#social-level-tags .tag").forEach(x=>x.classList.remove("sel","social-sel"));
+    t.classList.add("social-sel");selectedSocialLevel=t.dataset.val;
+  };
+});
+
+async function startSocialSession(){
+  setBtn("social-start-btn","Loading scenario...",true);
+  document.getElementById("social-error").innerHTML="";
+  const data=SOCIAL_SCENARIOS[selectedSocial]||SOCIAL_SCENARIOS.small_talk;
+  const scene=data.scenes[Math.floor(Math.random()*data.scenes.length)];
+  socialSceneData={scenario:selectedSocial,scene,label:data.label};
+  socialRound=1;socialSessionScore=0;
+  try{
+    const prompt=`Here is a social scenario for an English learner:\n"${scene}"\n\nCreate one specific conversation prompt. What does the other person say or do that requires the student to respond? Make it feel real and slightly challenging. Return only the prompt sentence, nothing else. Level: ${selectedSocialLevel==="hard"?"cold and formal":"warm and casual"}.`;
+    const p=await callAPI([{role:"user",content:prompt}]);
+    document.getElementById("social-scene-text").textContent=scene;
+    document.getElementById("social-prompt-text").textContent=p;
+    document.getElementById("social-scenario-label").textContent=data.label+" · Round "+socialRound;
+    document.getElementById("social-home").style.display="none";
+    document.getElementById("social-session").style.display="block";
+    document.getElementById("social-score-card").style.display="none";
+    document.getElementById("social-next-row").style.display="none";
+    document.getElementById("social-btn-row").style.display="flex";
+    document.getElementById("social-draft").value="";
+    document.getElementById("social-feedback").innerHTML="";
+    setBtn("social-start-btn","Start scenario ↗",false);
+  }catch(e){
+    document.getElementById("social-error").innerHTML=`<div class="error-box">${e.message}</div>`;
+    setBtn("social-start-btn","Start scenario ↗",false);
+  }
+}
+
+async function submitSocialResponse(){
+  const draft=document.getElementById("social-draft").value.trim();
+  if(!draft)return;
+  setBtn("social-submit-btn","Analyzing...",true);
+  document.getElementById("social-error-session").innerHTML="";
+  document.getElementById("social-feedback").innerHTML="";
+  try{
+    const fb=await callAPI([{role:"user",content:`Scenario: "${socialSceneData.scene}"\nPrompt: "${document.getElementById("social-prompt-text").textContent}"\nStudent response: "${draft}"\n\nGive feedback:\nNATURALNESS: (Does it sound like something a fluent English speaker would actually say? 1-2 sentences)\nONE FIX: (The single most important thing to improve, before and after)\nC1 VERSION: (How a confident C1 speaker would respond in this exact moment)\nBONUS PHRASE: (One conversation extender they could add)\n\nNo em dashes. Be warm and direct.`}]);
+    document.getElementById("social-feedback").innerHTML=`<div class="social-feedback">${fb}</div>`;
+    const score=draft.length>60?35:draft.length>30?25:15;
+    socialSessionScore+=score;
+    progress.xp+=15;progress.level=Math.floor(progress.xp/XP_PER_LEVEL)+1;
+    progress.socialSessions=(progress.socialSessions||0)+1;
+    const earned=[];
+    if(progress.socialSessions===1&&!progress.badges.includes("first_social")){progress.badges.push("first_social");earned.push("first_social");}
+    if(progress.socialSessions>=5&&!progress.badges.includes("social_5")){progress.badges.push("social_5");earned.push("social_5");}
+    saveP(progress);updateHomeStats();
+    if(earned.length>0)showBadgePopup(earned);
+    document.getElementById("social-btn-row").style.display="none";
+    document.getElementById("social-next-row").style.display="flex";
+    if(socialRound>=3){
+      document.getElementById("social-score-card").style.display="block";
+      document.getElementById("social-final-score").textContent=socialSessionScore;
+      document.getElementById("social-final-xp").textContent="+45 XP earned";
+    }
+  }catch(e){
+    document.getElementById("social-error-session").innerHTML=`<div class="error-box">${e.message}</div>`;
+    setBtn("social-submit-btn","Submit response ↗",false);
+  }
+}
+
+async function nextSocialRound(){
+  if(socialRound>=3){exitSocialSession();return;}
+  socialRound++;
+  document.getElementById("social-scenario-label").textContent=socialSceneData.label+" · Round "+socialRound;
+  document.getElementById("social-feedback").innerHTML="";
+  document.getElementById("social-draft").value="";
+  document.getElementById("social-next-row").style.display="none";
+  document.getElementById("social-btn-row").style.display="flex";
+  setBtn("social-submit-btn","Submit response ↗",false);
+  try{
+    const scenarios=SOCIAL_SCENARIOS[selectedSocial]||SOCIAL_SCENARIOS.small_talk;
+    const scene=scenarios.scenes[socialRound-1]||scenarios.scenes[0];
+    socialSceneData.scene=scene;
+    const p=await callAPI([{role:"user",content:`Social scenario: "${scene}"\nCreate one specific prompt that requires an immediate response. Level: ${selectedSocialLevel==="hard"?"cold and formal":"warm and casual"}. Return only the prompt, nothing else.`}]);
+    document.getElementById("social-scene-text").textContent=scene;
+    document.getElementById("social-prompt-text").textContent=p;
+  }catch(e){
+    document.getElementById("social-error-session").innerHTML=`<div class="error-box">${e.message}</div>`;
+  }
+}
+
+function exitSocialSession(){
+  document.getElementById("social-session").style.display="none";
+  document.getElementById("social-home").style.display="block";
+}
+
+// ACADEMIC SESSION
+function togglePersonal(){
+  personalMode=!personalMode;
+  document.getElementById("personal-toggle-track").classList.toggle("on",personalMode);
+  document.getElementById("personal-input-box").style.display=personalMode?"block":"none";
+  document.getElementById("topic-tags-box").style.display=personalMode?"none":"block";
+}
+
+document.querySelectorAll("#topic-tags .tag").forEach(t=>{
+  t.onclick=()=>{document.querySelectorAll("#topic-tags .tag").forEach(x=>x.classList.remove("sel"));t.classList.add("sel");selectedTopic=t.dataset.val;selectedTopicLabel=t.textContent;};
+});
+document.querySelectorAll("#level-tags .tag").forEach(t=>{
+  t.onclick=()=>{document.querySelectorAll("#level-tags .tag").forEach(x=>x.classList.remove("sel"));t.classList.add("sel");selectedLevel=t.dataset.val;};
+});
+
+function getWordLockWords(){
+  const bank=progress.phraseBank||DEFAULT_PHRASES;
+  const shuffled=[...bank].sort(()=>Math.random()-.5);
+  const newWords=["pivotal","nuanced","compelling","prevalent","sustained","intrinsic","catalyst","holistic","underscore","profound"];
+  const nw=newWords[Math.floor(Math.random()*newWords.length)];
+  return[shuffled[0]||DEFAULT_PHRASES[0],shuffled[1]||DEFAULT_PHRASES[1],{phrase:nw,example:"",isNew:true}];
+}
+
+function renderWordChips(words,draft){
+  const txt=(draft||"").toLowerCase();
+  return words.map(w=>`<div class="word-chip ${txt.includes(w.phrase.toLowerCase())?"used":""}">${txt.includes(w.phrase.toLowerCase())?"✓ ":""}${w.phrase}${w.isNew?" (new)":""}</div>`).join("");
+}
+
+async function startSession(){
+  setBtn("start-btn","Loading...",true);
+  document.getElementById("home-error").innerHTML="";
+  const today=getTodayStr(),last=progress.lastDate;
+  const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  const newStreak=last===yesterday?progress.streak+1:last===today?progress.streak:1;
+  progress.lastDate=today;progress.streak=newStreak;saveP(progress);
+  wordLockWords=getWordLockWords();wordLockBypassed=false;
+  document.getElementById("word-chips").innerHTML=renderWordChips(wordLockWords,"");
+  let topicPrompt=selectedTopic;
+  if(personalMode){const p=document.getElementById("personal-topic-input").value.trim();if(p)topicPrompt=`something related to: "${p}", connected to a real academic concept`;}
+  try{
+    concept=await callAPI([{role:"user",content:`Write a short academic concept explanation about ${topicPrompt}. Write 4 to 5 sentences. Level: ${selectedLevel}. Make it real-world relevant. Return only the paragraph, no title, no label.`}]);
+    document.getElementById("concept-text").textContent=concept;
+    document.getElementById("session-topic-label").textContent=selectedTopicLabel+" · "+selectedLevel;
+    document.getElementById("home-screen").style.display="none";
+    document.getElementById("session-screen").style.display="block";
+    sessionScore=0;
+  }catch(e){
+    document.getElementById("home-error").innerHTML=`<div class="error-box">Could not load concept: ${e.message}</div>`;
+    setBtn("start-btn","Start session ↗",false);
+  }
+}
+
+async function submitDraft1(){
+  const draft=document.getElementById("draft-1").value.trim();if(!draft)return;
+  if(!wordLockBypassed){
+    const missed=wordLockWords.filter(w=>!draft.toLowerCase().includes(w.phrase.toLowerCase()));
+    if(missed.length>0){
+      document.getElementById("missed-words-msg").textContent=`You missed: ${missed.map(w=>'"'+w.phrase+'"').join(", ")}. Revise or submit anyway.`;
+      document.getElementById("word-lock-popup").style.display="flex";
+      pendingSubmit="draft1";return;
+    }
+  }
+  await processDraft1(draft);
+}
+
+async function processDraft1(draft){
+  setBtn("btn-p1","Analyzing...",true);
+  document.getElementById("error-1").innerHTML="";
+  document.getElementById("feedback-1").innerHTML="";
+  document.getElementById("word-lock-feedback").innerHTML="";
+  const used=wordLockWords.filter(w=>draft.toLowerCase().includes(w.phrase.toLowerCase()));
+  const missed=wordLockWords.filter(w=>!draft.toLowerCase().includes(w.phrase.toLowerCase()));
+  try{
+    const fb=await callAPI([{role:"user",content:`Original concept:\n"${concept}"\n\nStudent explanation:\n"${draft}"\n\nThe student was asked to use: ${wordLockWords.map(w=>w.phrase).join(", ")}.\n\nGive feedback:\nWHAT'S WORKING: (1-2 sentences)\nONE CORRECTION: (most important fix, before and after)\nC1 UPGRADE: (2-3 sentences)\nFILIPINO ENGLISH TRAP: (flag any sentence that sounds like a direct translation, or write NONE)\n\nNo em dashes.`}]);
+    document.getElementById("feedback-1").innerHTML=`<div class="feedback">${fb}</div>`;
+    const wlBonus=used.length*10;
+    sessionScore+=draft.length>80?35:draft.length>40?25:15;sessionScore+=wlBonus;
+    if(used.length===wordLockWords.length){
+      document.getElementById("word-lock-feedback").innerHTML=`<div class="warning-box" style="background:rgba(29,158,117,0.08);border-color:var(--green);color:var(--green-light);">🔒 Word Lock complete! +${wlBonus} XP</div>`;
+      progress.wordLockWins=(progress.wordLockWins||0)+1;
+    }else if(missed.length>0){
+      document.getElementById("word-lock-feedback").innerHTML=`<div class="warning-box">Missed: ${missed.map(w=>'"'+w.phrase+'"').join(", ")}</div>`;
+    }
+    setBtn("btn-p1","Continue to Phase 2 ↗",false);
+    document.getElementById("btn-p1").onclick=loadQuestions;
+  }catch(e){
+    document.getElementById("error-1").innerHTML=`<div class="error-box">${e.message}</div>`;
+    setBtn("btn-p1","Submit explanation ↗",false);
+  }
+}
+
+function bypassWordLock(){
+  document.getElementById("word-lock-popup").style.display="none";
+  wordLockBypassed=true;
+  if(pendingSubmit==="draft1")processDraft1(document.getElementById("draft-1").value.trim());
+}
+
+async function loadQuestions(){
+  setBtn("btn-p1","Loading...",true);
+  try{
+    const qs=await callAPI([{role:"user",content:`Based on:\n"${concept}"\n\nWrite exactly 3 critical thinking questions labeled Q1, Q2, Q3. Each 1 sentence. Push the student to analyze, evaluate, or apply. Make them personal and real-world. Return only the 3 questions.`}]);
+    drillQuestions=qs.split("\n").filter(l=>l.trim());
+    document.getElementById("questions-list").innerHTML=drillQuestions.map(q=>`<div class="q-item">${q}</div>`).join("");
+    document.getElementById("dot-1").classList.replace("active","done");
+    document.getElementById("dot-2").classList.add("active");
+    document.getElementById("phase-1").style.display="none";
+    document.getElementById("phase-2").style.display="block";
+  }catch(e){
+    document.getElementById("error-1").innerHTML=`<div class="error-box">${e.message}</div>`;
+    setBtn("btn-p1","Continue to Phase 2 ↗",false);
+  }
+}
+
+async function submitDrill(){
+  const draft=document.getElementById("draft-2").value.trim();if(!draft)return;
+  setBtn("btn-p2","Analyzing...",true);
+  document.getElementById("error-2").innerHTML="";document.getElementById("feedback-2").innerHTML="";
+  try{
+    const fb=await callAPI([{role:"user",content:`Concept: "${concept}"\nQuestions:\n${drillQuestions.join("\n")}\nAnswers:\n"${draft}"\n\nFeedback:\nCRITICAL THINKING CHECK: (2-3 sentences — did they connect back to the concept?)\nVOCABULARY NOTE: (one phrase upgrade in a sentence)\nREACH HIGHER: (one more advanced word they could have used, shown in context)\n\nNo em dashes.`}]);
+    document.getElementById("feedback-2").innerHTML=`<div class="feedback">${fb}</div>`;
+    sessionScore+=draft.length>120?40:draft.length>60?28:15;
+    setBtn("btn-p2","Continue to Phase 3 ↗",false);
+    document.getElementById("btn-p2").onclick=loadPhrases;
+  }catch(e){
+    document.getElementById("error-2").innerHTML=`<div class="error-box">${e.message}</div>`;
+    setBtn("btn-p2","Submit answers ↗",false);
+  }
+}
+
+async function loadPhrases(){
+  setBtn("btn-p2","Loading...",true);
+  const bonus=sessionScore>=60?25:15;const total=sessionScore+bonus;
+  xpGained=Math.round(total*1.5);sessionScore=total;
+  try{
+    const ph=await callAPI([{role:"user",content:`From:\n"${document.getElementById("draft-1").value}"\n\nPick 2 phrases to upgrade to C1:\nOriginal: [phrase]\nUpgraded: [C1 version]\nExample: [sentence]\n\nAlso give 1 new phrase from today's concept:\nNew phrase: [phrase]\nExample: [sentence]\n\nNo em dashes.`}]);
+    document.getElementById("phrases-output").innerHTML=`<div class="feedback">${ph}</div>`;
+    const lines=ph.split("\n");
+    lines.forEach(line=>{
+      const m=line.match(/^(Upgraded|New phrase):\s*(.+)/i);
+      if(m){const np=m[2].trim().replace(/[\[\]]/g,"");
+        if(np&&!progress.phraseBank.find(p=>p.phrase.toLowerCase()===np.toLowerCase()))
+          progress.phraseBank.push({phrase:np,example:"",addedAt:getTodayStr()});
+      }
+    });
+    await detectPatterns();
+    progress.xp+=xpGained;progress.sessions+=1;
+    progress.highScore=Math.max(progress.highScore||0,sessionScore);
+    progress.level=Math.floor(progress.xp/XP_PER_LEVEL)+1;
+    saveP(progress);updateHomeStats();
+    const earned=[];
+    const checks=[["first_session",progress.sessions===1],["streak_3",progress.streak>=3],
+      ["streak_7",progress.streak>=7],["word_lock_3",(progress.wordLockWins||0)>=3],
+      ["level_5",progress.level>=5],["level_10",progress.level>=10],
+      ["perfect_session",sessionScore>=100],["sessions_10",progress.sessions>=10],
+      ["phrase_20",(progress.phraseBank||[]).length>=20]];
+    checks.forEach(([id,cond])=>{if(cond&&!progress.badges.includes(id)){progress.badges.push(id);earned.push(id);}});
+    saveP(progress);
+    document.getElementById("final-score").textContent=sessionScore;
+    document.getElementById("final-xp").textContent="+"+xpGained+" XP earned";
+    document.getElementById("dot-2").classList.replace("active","done");
+    document.getElementById("dot-3").classList.add("active");
+    document.getElementById("phase-2").style.display="none";
+    document.getElementById("phase-3").style.display="block";
+    if(earned.length>0)showBadgePopup(earned);
+  }catch(e){
+    document.getElementById("error-3").innerHTML=`<div class="error-box">${e.message}</div>`;
+    setBtn("btn-p2","Continue to Phase 3 ↗",false);
+  }
+}
+
+async function detectPatterns(){
+  const allText=document.getElementById("draft-1").value+" "+document.getElementById("draft-2").value;
+  try{
+    const result=await callAPI([{role:"user",content:`Analyze this writing for recurring grammar or vocabulary errors:\n"${allText}"\n\nIdentify up to 2 specific error patterns. For each write 1 short sentence. Label each: PATTERN: [description]. Return only the patterns.`}]);
+    result.split("\n").filter(l=>l.match(/^PATTERN:/i)).forEach(line=>{
+      const text=line.replace(/^PATTERN:\s*/i,"").trim();if(!text)return;
+      const ex=progress.patterns.find(p=>p.text===text);
+      if(ex)ex.count=(ex.count||1)+1;else progress.patterns.push({text,count:1});
+    });
+    progress.patterns.sort((a,b)=>b.count-a.count);progress.patterns=progress.patterns.slice(0,5);
+    if(progress.patterns.length>0){
+      document.getElementById("pattern-warning-card").style.display="block";
+      document.getElementById("pattern-warning-text").textContent="Watch for this next session: "+progress.patterns[0].text;
+    }
+  }catch(e){}
+}
+
+function showBadgePopup(earned){
+  document.getElementById("popup-badges").innerHTML=earned.map(id=>{
+    const b=BADGES_DEF.find(x=>x.id===id);
+    return b?`<div style="font-size:14px;color:var(--green-light);margin-bottom:4px">${b.icon} ${b.label}</div>`:"";
+  }).join("");
+  document.getElementById("badge-popup").style.display="flex";
+}
+
+function setBtn(id,text,disabled){const b=document.getElementById(id);if(b){b.textContent=text;b.disabled=disabled;}}
+
+function exitSession(){
+  document.getElementById("session-screen").style.display="none";
+  document.getElementById("home-screen").style.display="block";
+  setBtn("start-btn","Start session ↗",false);updateHomeStats();
+}
+
+function resetSession(){
+  ["draft-1","draft-2"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  ["feedback-1","feedback-2","error-1","error-2","error-3","phrases-output","questions-list","word-lock-feedback"].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML="";});
+  document.getElementById("pattern-warning-card").style.display="none";
+  document.getElementById("dot-1").className="phase-dot active";
+  document.getElementById("dot-2").className="phase-dot";
+  document.getElementById("dot-3").className="phase-dot";
+  document.getElementById("phase-1").style.display="block";
+  document.getElementById("phase-2").style.display="none";
+  document.getElementById("phase-3").style.display="none";
+  document.getElementById("session-screen").style.display="none";
+  document.getElementById("home-screen").style.display="block";
+  document.getElementById("btn-p1").onclick=submitDraft1;
+  document.getElementById("btn-p2").onclick=submitDrill;
+  setBtn("start-btn","Start session ↗",false);
+  setBtn("btn-p1","Submit explanation ↗",false);
+  setBtn("btn-p2","Submit answers ↗",false);
+  wordLockBypassed=false;pendingSubmit=null;updateHomeStats();
+}
+
+document.addEventListener("input",function(e){
+  if(e.target&&e.target.id==="draft-1")
+    document.getElementById("word-chips").innerHTML=renderWordChips(wordLockWords,e.target.value);
+});
+
+function renderStats(){
+  const items=[["Total XP",progress.xp],["Level",getLevelName(progress.level)],
+    ["Best Score",progress.highScore||0],["Sessions",progress.sessions],
+    ["Social Sessions",progress.socialSessions||0],["Phrases",(progress.phraseBank||[]).length]];
+  document.getElementById("stats-grid").innerHTML=items.map(([k,v])=>
+    `<div class="stats-cell"><div class="stats-val">${v}</div><div class="stats-key">${k}</div></div>`).join("");
+  const pats=progress.patterns||[];
+  document.getElementById("stats-pattern-list").innerHTML=pats.length>0
+    ?pats.map(p=>`<div class="pattern-item"><div class="pattern-count">${p.count}x</div><div class="pattern-text">${p.text}</div></div>`).join("")
+    :`<div style="font-size:13px;color:var(--muted)">Complete a session to see your patterns.</div>`;
+}
+
+function renderBadges(){
+  document.getElementById("badge-grid").innerHTML=BADGES_DEF.map(b=>{
+    const earned=progress.badges.includes(b.id);
+    return `<div class="badge-item ${earned?"earned":""}">
+      <div class="badge-icon" style="opacity:${earned?1:.3}">${b.icon}</div>
+      <div><div class="badge-name" style="color:${earned?"var(--text)":"var(--muted)"}">${b.label}</div>
+      <div class="badge-desc">${b.desc}</div></div></div>`;
+  }).join("");
+}
+
+function renderPhrases(){
+  const bank=progress.phraseBank||[];
+  document.getElementById("phrase-bank-list").innerHTML=bank.length>0
+    ?bank.map(p=>`<div style="padding:10px 0;border-bottom:.5px solid var(--border);">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px;">${p.phrase}</div>
+        ${p.example?`<div style="font-size:12px;color:var(--muted);font-style:italic;">${p.example}</div>`:""}
+      </div>`).join("")
+    :`<div style="font-size:13px;color:var(--muted)">Complete sessions to build your bank.</div>`;
+}
+
+function renderQuiz(){
+  const bank=(progress.phraseBank||[]).filter(p=>p.example);
+  if(bank.length<3){
+    document.getElementById("quiz-body").innerHTML=`<div style="font-size:14px;color:var(--muted);line-height:1.7;">Need at least 3 phrases with examples. Keep playing to build your bank.</div>`;
+    return;
+  }
+  quizCurrentWord=bank[Math.floor(Math.random()*bank.length)];
+  quizAnswered=false;
+  const blank=quizCurrentWord.example.replace(new RegExp(quizCurrentWord.phrase,"i"),"_______");
+  document.getElementById("quiz-body").innerHTML=`
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Fill in the blank</div>
+    <div style="font-size:15px;color:var(--text);line-height:1.8;font-style:italic;margin-bottom:16px;">"${blank}"</div>
+    <input class="quiz-input" id="quiz-answer" placeholder="Type the missing phrase..." onkeydown="if(event.key==='Enter')checkQuiz()"/>
+    <div class="btn-row"><button class="btn" onclick="checkQuiz()">Check ↗</button></div>
+    <div id="quiz-result"></div>
+    <div id="quiz-next" style="display:none;margin-top:12px;">
+      <button class="btn-ghost" onclick="renderQuiz()">Next phrase ↗</button>
+    </div>`;
+}
+
+function checkQuiz(){
+  if(quizAnswered)return;
+  const answer=(document.getElementById("quiz-answer")?.value||"").trim().toLowerCase();
+  const correct=quizCurrentWord.phrase.toLowerCase();
+  quizAnswered=true;
+  const ok=answer===correct||answer.includes(correct)||correct.includes(answer);
+  document.getElementById("quiz-result").innerHTML=`<div class="quiz-result ${ok?"correct":"wrong"}">${ok?"✓ Correct! "+quizCurrentWord.phrase:"✗ Answer: \""+quizCurrentWord.phrase+"\""}</div>`;
+  document.getElementById("quiz-next").style.display="block";
+  if(ok){progress.xp+=10;progress.level=Math.floor(progress.xp/XP_PER_LEVEL)+1;saveP(progress);updateHomeStats();}
+}
+
+updateHomeStats();
+renderCheatSheet();
+</script>
+</body>
+</html>
