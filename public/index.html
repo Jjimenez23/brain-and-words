@@ -501,9 +501,10 @@ async function callAPI(messages,systemMsg){
       messages
     })
   });
-  if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.error||"API error "+res.status);}
   const data=await res.json();
-  return data.content.map(b=>b.text||"").join("").trim();
+  if(!res.ok || data.error) throw new Error(data.error||"API error "+res.status);
+  if(!data.text) throw new Error("Empty response from API");
+  return data.text;
 }
 
 function updateHomeStats(){
