@@ -25,7 +25,7 @@ exports.handler = async function (event) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 1000,
         system: body.system || "You are an English fluency coach for a Filipino-Canadian woman at B2 level working toward C1. Be warm, direct, concise. Never use em dashes.",
         messages: body.messages,
